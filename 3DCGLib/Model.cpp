@@ -19,58 +19,26 @@ namespace Lib
     void Model::render(Color &color)
     {
         auto &directX = DirectX11::getInstance();
+        
+        // ----- モデルの描画 -----
 
-        // ライトの位置
-        float vLightDires[2][4] = 
-        {
-            { -0.5f,  0.5f,  0.5f, 1.0f },
-            {  0.5f, -0.5f, -0.5f, 1.0f },
-        };
-        // ライトの色
-        float vLightColors[2][4] = 
-        {
-            { 1.0f, 1.0f, 1.0f, 1.0f },
-            { 0.0f, 1.0f, 0.0f, 1.0f },
-        };
-        // 初期化の色
-        float defaultOutputColor[4]
-        {
-            0.0f, 0.0f, 0.0f, 0.0f 
-        };
-
-        // ライティングされる中心のモデルの描画
+        // コンスタントバッファの更新
         ConstantBuffer cb;
         cb.world      = Matrix::transpose(world);
         cb.view       = Matrix::transpose(directX.getViewMatrix());
         cb.projection = Matrix::transpose(directX.getProjectionMatrix());
-        memcpy(cb.vLightDire[0], vLightDires[0], sizeof(vLightDires[0]));
-        memcpy(cb.vLightDire[1], vLightDires[1], sizeof(vLightDires[1]));
-        memcpy(cb.vLightColor[0], vLightColors[0], sizeof(vLightColors[0]));
-        memcpy(cb.vLightColor[1], vLightColors[1], sizeof(vLightColors[1]));
-        memcpy(cb.vOutputColor, defaultOutputColor, sizeof(defaultOutputColor));
         directX.getDeviceContext()->UpdateSubresource(constantBuffer.Get(), 0, nullptr, &cb, 0, 0);
 
+        // シェーダーの更新
         directX.getDeviceContext()->VSSetShader(vertexShader.Get(), nullptr, 0);
         directX.getDeviceContext()->VSSetConstantBuffers(0, 1, constantBuffer.GetAddressOf());
         directX.getDeviceContext()->PSSetShader(psLight.Get(), nullptr, 0);
-        directX.getDeviceContext()->PSSetConstantBuffers(0, 1, constantBuffer.GetAddressOf());
+        directX.getDeviceContext()->PSSetShaderResources(0, 1, shaderResourceView.GetAddressOf());
+        directX.getDeviceContext()->PSSetSamplers(0, 1, samplerState.GetAddressOf());
+
+        // 描画
         directX.getDeviceContext()->DrawIndexed(36, 0, 0);
 
-        // 2ヶ所にライトの位置を示すオブジェクトを配置
-        for (int i = 0; i < 2; ++i) {
-            auto mtLight  = Matrix::Identify;
-            auto mttLight = Matrix::translate(Vector3(vLightDires[i][0], vLightDires[i][1], vLightDires[i][2]) * 5.0f);
-            auto mtsLight = Matrix::scale(0.2f, 0.2f, 0.2f);
-            mtLight = mtsLight * mttLight;
-
-            cb.world = Matrix::transpose(mtLight);
-            memcpy(cb.vOutputColor, vLightColors[i], sizeof(vLightColors[i]));
-            directX.getDeviceContext()->UpdateSubresource(constantBuffer.Get(), 0, nullptr, &cb, 0, 0);
-
-            directX.getDeviceContext()->PSSetShader(psSolid.Get(), nullptr, 0);
-            directX.getDeviceContext()->PSSetConstantBuffers(0, 1, constantBuffer.GetAddressOf());
-            directX.getDeviceContext()->DrawIndexed(36, 0, 0);
-        }
     }
 
     // ワールド行列を設定
@@ -107,8 +75,8 @@ namespace Lib
 
         // InputLayouの定義
         D3D11_INPUT_ELEMENT_DESC layout[] = {
-            { "POSITION", 0,    DXGI_FORMAT_R32G32B32_FLOAT, 0,  0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-            {   "NORMAL", 0,    DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+            { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0,  0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+            { "TEXCOORD", 0,    DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
         };
         UINT numElements = ARRAYSIZE(layout);
 
@@ -121,25 +89,11 @@ namespace Lib
 
         // InputLayoutをセット
         directX.getDeviceContext()->IASetInputLayout(vertexLayout.Get());
-
+        
         // PixelShaderの読み込み
-        auto PSBlobSolid = shaderCompile(L"PSSolid.hlsl", "PSSolid", "ps_4_0");
-        if (PSBlobSolid == nullptr) {
-            MessageBox(nullptr, L"shaderCompile()の失敗(VS)", L"Error", MB_OK);
-            return hr;
-        }
-
-        // PixelShaderの作成
-        hr = directX.getDevice()->CreatePixelShader(PSBlobSolid->GetBufferPointer(), PSBlobSolid->GetBufferSize(), nullptr, psSolid.GetAddressOf());
-        if (FAILED(hr)) {
-            MessageBox(nullptr, L"createPixelShader()の失敗", L"Error", MB_OK);
-            return hr;
-        }
-
-        // PixelShaderの読み込み
-        auto PSBlobLight = shaderCompile(L"PSLight.hlsl", "PSLight", "ps_4_0");
+        auto PSBlobLight = shaderCompile(L"PixelShader.hlsl", "PS", "ps_4_0");
         if (PSBlobLight == nullptr) {
-            MessageBox(nullptr, L"shaderCompile()の失敗(VS)", L"Error", MB_OK);
+            MessageBox(nullptr, L"shaderCompile()の失敗(PS)", L"Error", MB_OK);
             return hr;
         }
 
@@ -153,35 +107,35 @@ namespace Lib
         // VertexBufferの定義
         SimpleVertex vertices[] =
         {
-            { { -1.0f,  1.0f, -1.0f }, {  0.0f,  1.0f,  0.0f} },
-            { {  1.0f,  1.0f, -1.0f }, {  0.0f,  1.0f,  0.0f} },
-            { {  1.0f,  1.0f,  1.0f }, {  0.0f,  1.0f,  0.0f} },
-            { { -1.0f,  1.0f,  1.0f }, {  0.0f,  1.0f,  0.0f} },
-
-            { { -1.0f, -1.0f, -1.0f }, {  0.0f, -1.0f,  0.0f} },
-            { {  1.0f, -1.0f, -1.0f }, {  0.0f, -1.0f,  0.0f} },
-            { {  1.0f, -1.0f,  1.0f }, {  0.0f, -1.0f,  0.0f} },
-            { { -1.0f, -1.0f,  1.0f }, {  0.0f, -1.0f,  0.0f} },
-
-            { { -1.0f, -1.0f,  1.0f }, { -1.0f,  0.0f,  0.0f} },
-            { { -1.0f, -1.0f, -1.0f }, { -1.0f,  0.0f,  0.0f} },
-            { { -1.0f,  1.0f, -1.0f }, { -1.0f,  0.0f,  0.0f} },
-            { { -1.0f,  1.0f,  1.0f }, { -1.0f,  0.0f,  0.0f} },
-
-            { {  1.0f, -1.0f,  1.0f }, {  1.0f,  0.0f,  0.0f} },
-            { {  1.0f, -1.0f, -1.0f }, {  1.0f,  0.0f,  0.0f} },
-            { {  1.0f,  1.0f, -1.0f }, {  1.0f,  0.0f,  0.0f} },
-            { {  1.0f,  1.0f,  1.0f }, {  1.0f,  0.0f,  0.0f} },
-
-            { { -1.0f, -1.0f, -1.0f }, {  0.0f,  0.0f, -1.0f} },
-            { {  1.0f, -1.0f, -1.0f }, {  0.0f,  0.0f, -1.0f} },
-            { {  1.0f,  1.0f, -1.0f }, {  0.0f,  0.0f, -1.0f} },
-            { { -1.0f,  1.0f, -1.0f }, {  0.0f,  0.0f, -1.0f} },
-
-            { { -1.0f, -1.0f,  1.0f }, {  0.0f,  0.0f,  1.0f} },
-            { {  1.0f, -1.0f,  1.0f }, {  0.0f,  0.0f,  1.0f} },
-            { {  1.0f,  1.0f,  1.0f }, {  0.0f,  0.0f,  1.0f} },
-            { { -1.0f,  1.0f,  1.0f }, {  0.0f,  0.0f,  1.0f} },
+            { { -1.0f,  1.0f, -1.0f }, { 0.0f, 0.0f } },
+            { {  1.0f,  1.0f, -1.0f }, { 1.0f, 0.0f } },
+            { {  1.0f,  1.0f,  1.0f }, { 1.0f, 1.0f } },
+            { { -1.0f,  1.0f,  1.0f }, { 0.0f, 1.0f } },
+                                                    
+            { { -1.0f, -1.0f, -1.0f }, { 0.0f, 0.0f } },
+            { {  1.0f, -1.0f, -1.0f }, { 1.0f, 0.0f } },
+            { {  1.0f, -1.0f,  1.0f }, { 1.0f, 1.0f } },
+            { { -1.0f, -1.0f,  1.0f }, { 0.0f, 1.0f } },
+                                                    
+            { { -1.0f, -1.0f,  1.0f }, { 0.0f, 0.0f } },
+            { { -1.0f, -1.0f, -1.0f }, { 1.0f, 0.0f } },
+            { { -1.0f,  1.0f, -1.0f }, { 1.0f, 1.0f } },
+            { { -1.0f,  1.0f,  1.0f }, { 0.0f, 1.0f } },
+                                                    
+            { {  1.0f, -1.0f,  1.0f }, { 0.0f, 0.0f } },
+            { {  1.0f, -1.0f, -1.0f }, { 1.0f, 0.0f } },
+            { {  1.0f,  1.0f, -1.0f }, { 1.0f, 1.0f } },
+            { {  1.0f,  1.0f,  1.0f }, { 0.0f, 1.0f } },
+                                                    
+            { { -1.0f, -1.0f, -1.0f }, { 0.0f, 0.0f } },
+            { {  1.0f, -1.0f, -1.0f }, { 1.0f, 0.0f } },
+            { {  1.0f,  1.0f, -1.0f }, { 1.0f, 1.0f } },
+            { { -1.0f,  1.0f, -1.0f }, { 0.0f, 1.0f } },
+                                                    
+            { { -1.0f, -1.0f,  1.0f }, { 0.0f, 0.0f } },
+            { {  1.0f, -1.0f,  1.0f }, { 1.0f, 0.0f } },
+            { {  1.0f,  1.0f,  1.0f }, { 1.0f, 1.0f } },
+            { { -1.0f,  1.0f,  1.0f }, { 0.0f, 1.0f } },
         };
 
         D3D11_BUFFER_DESC bd;
@@ -251,6 +205,30 @@ namespace Lib
         hr = directX.getDevice()->CreateBuffer(&bd, nullptr, constantBuffer.GetAddressOf());
         if (FAILED(hr)) {
             MessageBox(nullptr, L"createBuffer()の失敗", L"Error", MB_OK);
+            return hr;
+        }
+
+        // テクスチャの読み込み
+        hr = DirectX::CreateWICTextureFromFile(directX.getDevice().Get(), L"Texture/Brick02-p.jpg", texture.GetAddressOf(), shaderResourceView.GetAddressOf());
+        if (FAILED(hr)) {
+            MessageBox(nullptr, L"CreateWICTextureFromFile()の失敗", L"Error", MB_OK);
+            return hr;
+        }
+
+        // サンプラーの作成
+        //TODO: コメントを書く
+        D3D11_SAMPLER_DESC smpDesc;
+        ZeroMemory(&smpDesc, sizeof(D3D11_SAMPLER_DESC));
+        smpDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+        smpDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+        smpDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+        smpDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+        smpDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
+        smpDesc.MinLOD = 0;
+        smpDesc.MaxLOD = D3D11_FLOAT32_MAX;
+        hr = directX.getDevice()->CreateSamplerState(&smpDesc, samplerState.GetAddressOf());
+        if (FAILED(hr)) {
+            MessageBox(nullptr, L"CreateSamplerState()の失敗", L"Error", MB_OK);
             return hr;
         }
 

@@ -3,6 +3,8 @@
 #define MODEL_H
 #include "DirectX11.h"
 #include "Matrix.h"
+#include "Lib\DirectXTex.h"
+#include "Lib\WICTextureLoader.h"
 
 namespace Lib
 {
@@ -26,7 +28,7 @@ namespace Lib
         struct SimpleVertex
         {
             float pos[3];
-            float normal[3];
+            float texture[2];
         };
 
         struct ConstantBuffer
@@ -34,19 +36,18 @@ namespace Lib
             Matrix world;
             Matrix view;
             Matrix projection;
-            float vLightDire[2][4];
-            float vLightColor[2][4];
-            float vOutputColor[4];
         };
 
-        ComPtr<ID3D11VertexShader>     vertexShader;
-        ComPtr<ID3D11PixelShader>      psSolid;
-        ComPtr<ID3D11PixelShader>      psLight;
-        ComPtr<ID3D11InputLayout>      vertexLayout;
-        ComPtr<ID3D11Buffer>           vertexBuffer;
-        ComPtr<ID3D11Buffer>           indexBuffer;
-        ComPtr<ID3D11Buffer>           constantBuffer;
-
+        ComPtr<ID3D11VertexShader>       vertexShader;
+        ComPtr<ID3D11PixelShader>        psLight;
+        ComPtr<ID3D11InputLayout>        vertexLayout;
+        ComPtr<ID3D11Buffer>             vertexBuffer;
+        ComPtr<ID3D11Buffer>             indexBuffer;
+        ComPtr<ID3D11Buffer>             constantBuffer;
+        ComPtr<ID3D11Resource>           texture;
+        ComPtr<ID3D11ShaderResourceView> shaderResourceView;
+        ComPtr<ID3D11SamplerState>       samplerState;
+         
         Matrix world;
     };
 }
