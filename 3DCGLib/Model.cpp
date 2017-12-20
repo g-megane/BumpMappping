@@ -216,16 +216,15 @@ namespace Lib
         }
 
         // サンプラーの作成
-        //TODO: コメントを書く
         D3D11_SAMPLER_DESC smpDesc;
         ZeroMemory(&smpDesc, sizeof(D3D11_SAMPLER_DESC));
-        smpDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-        smpDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
-        smpDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
-        smpDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
-        smpDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;
-        smpDesc.MinLOD = 0;
-        smpDesc.MaxLOD = D3D11_FLOAT32_MAX;
+        smpDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR; // テクスチャーのサンプリング時に使用するフィルタリングメソッド
+        smpDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;    // ０～１の範囲外にあるuテクスチャー座標を解決するために使用されるメソッド
+        smpDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;    // ０～１の範囲外にあるvテクスチャー座標を解決するために使用されるメソッド
+        smpDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;    // ０～１の範囲外にあるwテクスチャー座標を解決するために使用されるメソッド
+        smpDesc.ComparisonFunc = D3D11_COMPARISON_NEVER;  // 既存のサンプリングデータに対してデータを比較する関数
+        smpDesc.MinLOD = 0;                               // アクセスをクランプするミップマップ範囲の下限
+        smpDesc.MaxLOD = D3D11_FLOAT32_MAX;               // アクセスをクランプするミップマップ
         hr = directX.getDevice()->CreateSamplerState(&smpDesc, samplerState.GetAddressOf());
         if (FAILED(hr)) {
             MessageBox(nullptr, L"CreateSamplerState()の失敗", L"Error", MB_OK);

@@ -3,7 +3,6 @@
 #define MODEL_H
 #include "DirectX11.h"
 #include "Matrix.h"
-#include "Lib\DirectXTex.h"
 #include "Lib\WICTextureLoader.h"
 
 namespace Lib
