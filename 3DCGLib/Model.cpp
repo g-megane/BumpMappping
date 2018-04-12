@@ -34,6 +34,7 @@ namespace Lib
         directX.getDeviceContext()->VSSetConstantBuffers(0, 1, constantBuffer.GetAddressOf());
         directX.getDeviceContext()->PSSetShader(psLight.Get(), nullptr, 0);
         directX.getDeviceContext()->PSSetShaderResources(0, 1, shaderResourceView.GetAddressOf());
+        directX.getDeviceContext()->PSSetShaderResources(1, 1, shaderResourceViewN.GetAddressOf());
         directX.getDeviceContext()->PSSetSamplers(0, 1, samplerState.GetAddressOf());
 
         // ï`âÊ
@@ -76,7 +77,8 @@ namespace Lib
         // InputLayouÇÃíËã`
         D3D11_INPUT_ELEMENT_DESC layout[] = {
             { "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0,  0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-            { "TEXCOORD", 0,    DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+            { "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT,    0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+            {   "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
         };
         UINT numElements = ARRAYSIZE(layout);
 
@@ -107,35 +109,35 @@ namespace Lib
         // VertexBufferÇÃíËã`
         SimpleVertex vertices[] =
         {
-            { { -1.0f,  1.0f, -1.0f }, { 0.0f, 0.0f } },
-            { {  1.0f,  1.0f, -1.0f }, { 1.0f, 0.0f } },
-            { {  1.0f,  1.0f,  1.0f }, { 1.0f, 1.0f } },
-            { { -1.0f,  1.0f,  1.0f }, { 0.0f, 1.0f } },
-                                                    
-            { { -1.0f, -1.0f, -1.0f }, { 0.0f, 0.0f } },
-            { {  1.0f, -1.0f, -1.0f }, { 1.0f, 0.0f } },
-            { {  1.0f, -1.0f,  1.0f }, { 1.0f, 1.0f } },
-            { { -1.0f, -1.0f,  1.0f }, { 0.0f, 1.0f } },
-                                                    
-            { { -1.0f, -1.0f,  1.0f }, { 0.0f, 0.0f } },
-            { { -1.0f, -1.0f, -1.0f }, { 1.0f, 0.0f } },
-            { { -1.0f,  1.0f, -1.0f }, { 1.0f, 1.0f } },
-            { { -1.0f,  1.0f,  1.0f }, { 0.0f, 1.0f } },
-                                                    
-            { {  1.0f, -1.0f,  1.0f }, { 0.0f, 0.0f } },
-            { {  1.0f, -1.0f, -1.0f }, { 1.0f, 0.0f } },
-            { {  1.0f,  1.0f, -1.0f }, { 1.0f, 1.0f } },
-            { {  1.0f,  1.0f,  1.0f }, { 0.0f, 1.0f } },
-                                                    
-            { { -1.0f, -1.0f, -1.0f }, { 0.0f, 0.0f } },
-            { {  1.0f, -1.0f, -1.0f }, { 1.0f, 0.0f } },
-            { {  1.0f,  1.0f, -1.0f }, { 1.0f, 1.0f } },
-            { { -1.0f,  1.0f, -1.0f }, { 0.0f, 1.0f } },
-                                                    
-            { { -1.0f, -1.0f,  1.0f }, { 0.0f, 0.0f } },
-            { {  1.0f, -1.0f,  1.0f }, { 1.0f, 0.0f } },
-            { {  1.0f,  1.0f,  1.0f }, { 1.0f, 1.0f } },
-            { { -1.0f,  1.0f,  1.0f }, { 0.0f, 1.0f } },
+            { { -1.0f,  1.0f, -1.0f }, { 0.0f, 0.0f }, {  0.0f,  1.0f,  0.0f}},
+            { {  1.0f,  1.0f, -1.0f }, { 1.0f, 0.0f }, {  0.0f,  1.0f,  0.0f}},
+            { {  1.0f,  1.0f,  1.0f }, { 1.0f, 1.0f }, {  0.0f,  1.0f,  0.0f}},
+            { { -1.0f,  1.0f,  1.0f }, { 0.0f, 1.0f }, {  0.0f,  1.0f,  0.0f}},
+                                                             
+            { { -1.0f, -1.0f, -1.0f }, { 0.0f, 0.0f }, {  0.0f, -1.0f,  0.0f}},
+            { {  1.0f, -1.0f, -1.0f }, { 1.0f, 0.0f }, {  0.0f, -1.0f,  0.0f}},
+            { {  1.0f, -1.0f,  1.0f }, { 1.0f, 1.0f }, {  0.0f, -1.0f,  0.0f}},
+            { { -1.0f, -1.0f,  1.0f }, { 0.0f, 1.0f }, {  0.0f, -1.0f,  0.0f}},
+                                                            
+            { { -1.0f, -1.0f,  1.0f }, { 0.0f, 0.0f }, { -1.0f,  0.0f,  0.0f}},
+            { { -1.0f, -1.0f, -1.0f }, { 1.0f, 0.0f }, { -1.0f,  0.0f,  0.0f}},
+            { { -1.0f,  1.0f, -1.0f }, { 1.0f, 1.0f }, { -1.0f,  0.0f,  0.0f}},
+            { { -1.0f,  1.0f,  1.0f }, { 0.0f, 1.0f }, { -1.0f,  0.0f,  0.0f}},
+                                                             
+            { {  1.0f, -1.0f,  1.0f }, { 0.0f, 0.0f }, {  1.0f,  0.0f,  0.0f}},
+            { {  1.0f, -1.0f, -1.0f }, { 1.0f, 0.0f }, {  1.0f,  0.0f,  0.0f}},
+            { {  1.0f,  1.0f, -1.0f }, { 1.0f, 1.0f }, {  1.0f,  0.0f,  0.0f}},
+            { {  1.0f,  1.0f,  1.0f }, { 0.0f, 1.0f }, {  1.0f,  0.0f,  0.0f}},
+                                                             
+            { { -1.0f, -1.0f, -1.0f }, { 0.0f, 0.0f }, {  0.0f,  0.0f, -1.0f}},
+            { {  1.0f, -1.0f, -1.0f }, { 1.0f, 0.0f }, {  0.0f,  0.0f, -1.0f}},
+            { {  1.0f,  1.0f, -1.0f }, { 1.0f, 1.0f }, {  0.0f,  0.0f, -1.0f}},
+            { { -1.0f,  1.0f, -1.0f }, { 0.0f, 1.0f }, {  0.0f,  0.0f, -1.0f}},
+                                                             
+            { { -1.0f, -1.0f,  1.0f }, { 0.0f, 0.0f }, {  0.0f,  0.0f,  1.0f}},
+            { {  1.0f, -1.0f,  1.0f }, { 1.0f, 0.0f }, {  0.0f,  0.0f,  1.0f}},
+            { {  1.0f,  1.0f,  1.0f }, { 1.0f, 1.0f }, {  0.0f,  0.0f,  1.0f}},
+            { { -1.0f,  1.0f,  1.0f }, { 0.0f, 1.0f }, {  0.0f,  0.0f,  1.0f}},
         };
 
         D3D11_BUFFER_DESC bd;
@@ -209,7 +211,13 @@ namespace Lib
         }
 
         // ÉeÉNÉXÉ`ÉÉÇÃì«Ç›çûÇ›
-        hr = DirectX::CreateWICTextureFromFile(directX.getDevice().Get(), L"Texture/Brick02-p.jpg", texture.GetAddressOf(), shaderResourceView.GetAddressOf());
+        hr = DirectX::CreateWICTextureFromFile(directX.getDevice().Get(), L"Texture/Tex.png", texture.GetAddressOf(), shaderResourceView.GetAddressOf());
+        if (FAILED(hr)) {
+            MessageBox(nullptr, L"CreateWICTextureFromFile()ÇÃé∏îs", L"Error", MB_OK);
+            return hr;
+        }
+
+        hr = DirectX::CreateWICTextureFromFile(directX.getDevice().Get(), L"Texture/Tex_N.png", textureN.GetAddressOf(), shaderResourceViewN.GetAddressOf());
         if (FAILED(hr)) {
             MessageBox(nullptr, L"CreateWICTextureFromFile()ÇÃé∏îs", L"Error", MB_OK);
             return hr;

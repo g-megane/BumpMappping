@@ -28,6 +28,7 @@ namespace Lib
         {
             float pos[3];
             float texture[2];
+            float normal[3];
         };
 
         struct ConstantBuffer
@@ -44,7 +45,9 @@ namespace Lib
         ComPtr<ID3D11Buffer>             indexBuffer;
         ComPtr<ID3D11Buffer>             constantBuffer;
         ComPtr<ID3D11Resource>           texture;
+        ComPtr<ID3D11Resource>           textureN;
         ComPtr<ID3D11ShaderResourceView> shaderResourceView;
+        ComPtr<ID3D11ShaderResourceView> shaderResourceViewN;
         ComPtr<ID3D11SamplerState>       samplerState;
          
         Matrix world;
