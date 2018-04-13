@@ -110,7 +110,7 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
         // ÉÇÉfÉãÇÃêßå‰
         auto mtrX = Matrix::rotateX(rotX);
         auto mtrY = Matrix::rotateY(rotY);
-        auto mtt  = Matrix::translate(Vector3(0.0f, 0.0f, 0.0f));
+        auto mtt  = Matrix::translate(Vector3(0.0f, 0.5f, 0.0f));
         world = mtrX * mtrY * mtt;
         model.setWorldMatrix(world);
 
